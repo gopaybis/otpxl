@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>XL OTP Checker</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background: #f0f0f0;
+    }
+    form {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #ccc;
+      max-width: 400px;
+      margin-bottom: 1rem;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+    }
+    pre {
+      background: #eee;
+      padding: 1rem;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h2>Kirim / Verifikasi OTP XL</h2>
+  <form id="otpForm">
+    <label>Nomor HP (628xxxx):</label>
+    <input type="text" id="contact" name="contact" required pattern="628[0-9]{8,13}">
+
+    <label>Kode OTP (opsional):</label>
+    <input type="text" id="otp" name="otp">
+
+    <button type="submit" name="action" value="send">Kirim OTP</button>
+    <button type="button" id="verifyBtn">Verifikasi OTP</button>
+  </form>
+
+  <div id="resultArea"></div>
+
+  <script>
+    const form = document.getElementById('otpForm');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const resultArea = document.getElementById('resultArea');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await handleRequest('send');
+    });
+
+    verifyBtn.addEventListener('click', async () => {
+      await handleRequest('verify');
+    });
+
+    async function handleRequest(action) {
+      const contact = document.getElementById('contact').value.trim();
+      const otp = document.getElementById('otp').value.trim();
+
+      const payload = {
+        action,
+        contact,
+        otp: otp || ''
+      };
+
+      try {
+        const res = await fetch('https://xlotp.vercel.app/api/otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await res.text();
+        resultArea.innerHTML = `<h3>Respons:</h3><pre>${sanitize(text)}</pre>`;
+      } catch (err) {
+        resultArea.innerHTML = `<pre>Gagal menghubungi server OTP</pre>`;
+      }
+    }
+
+    function sanitize(str) {
+      return str.replace(/[&<>"]/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
+      })[c]);
+    }
+  </script>
+</body>
+</html>
